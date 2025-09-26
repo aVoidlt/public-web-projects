@@ -78,6 +78,65 @@ export async function GET(request: Request) {
       }
     }
 
+    // If still empty, try GNews as alternative provider if key is present
+    if (!articles.length && process.env.GNEWS_API_KEY) {
+      const gnewsToken = process.env.GNEWS_API_KEY;
+      // Search first (de → en)
+      for (const lang of ["de", "en"]) {
+        try {
+          const url = new URL("https://gnews.io/api/v4/search");
+          if (combined && combined !== "\"\"") url.searchParams.set("q", combined);
+          url.searchParams.set("lang", lang);
+          url.searchParams.set("token", gnewsToken);
+          url.searchParams.set("max", String(pageSize));
+          const res = await fetch(url.toString());
+          if (res.ok) {
+            const data = await res.json();
+            if (Array.isArray(data.articles) && data.articles.length) {
+              articles = data.articles.map((a: any) => ({
+                title: a.title,
+                description: a.description,
+                url: a.url,
+                urlToImage: a.image,
+                publishedAt: a.publishedAt,
+                source: { name: a.source?.name },
+              }));
+              break;
+            }
+          }
+        } catch {}
+      }
+
+      // Fallback top headlines on GNews
+      if (!articles.length) {
+        for (const lang of ["de", "en"]) {
+          try {
+            const url = new URL("https://gnews.io/api/v4/top-headlines");
+            if (combined && combined !== "\"\"") url.searchParams.set("q", combined);
+            url.searchParams.set("lang", lang);
+            url.searchParams.set("topic", "business");
+            url.searchParams.set("token", gnewsToken);
+            url.searchParams.set("max", String(pageSize));
+            const res = await fetch(url.toString());
+            if (res.ok) {
+              const data = await res.json();
+              if (Array.isArray(data.articles) && data.articles.length) {
+                articles = data.articles.map((a: any) => ({
+                  title: a.title,
+                  description: a.description,
+                  url: a.url,
+                  urlToImage: a.image,
+                  publishedAt: a.publishedAt,
+                  source: { name: a.source?.name },
+                }));
+                break;
+              }
+            }
+          } catch {}
+        }
+      }
+    }
+
     return NextResponse.json({ q, articles });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Unknown error";
