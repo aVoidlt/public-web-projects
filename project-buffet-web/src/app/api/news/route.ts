@@ -40,7 +40,7 @@ export async function GET(request: Request) {
     // Combine into a single query using OR to minimize requests
     const combined = candidates.map((t) => `"${t}"`).join(" OR ") || q || "";
 
-    // Try German first, then English; single request per language
+    // Try German first, then English; single request per language for `everything`
     let articles: any[] = [];
     for (const lang of ["de", "en"]) {
       try {
@@ -48,22 +48,25 @@ export async function GET(request: Request) {
           q: combined,
           language: lang as any,
           sortBy: "publishedAt",
+          searchIn: "title,description" as any,
           pageSize,
         });
         if (res.articles?.length) {
           articles = res.articles;
           break;
         }
+
+
       } catch {}
     }
 
     // Fallback: use Top Headlines (often returns more on free plan)
     if (!articles.length) {
-      for (const lang of ["de", "en"]) {
+      for (const country of ["de", "us"]) {
         try {
           const res = await newsapi.v2.topHeadlines({
-            q: combined || undefined,
-            language: lang as any,
+            q: (combined && combined !== "\"\"") ? combined : undefined,
+            country: country as any,
             category: "business" as any,
             pageSize,
           });
