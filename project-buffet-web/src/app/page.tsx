@@ -19,6 +19,11 @@ export default function Home() {
   );
   const { data: quote, isLoading: loadingQuote } = useSWR(`/api/quote?ticker=${encodeURIComponent(selected)}`, fetcher);
   const { data: news, isLoading: loadingNews } = useSWR<{ articles: any[] }>(`/api/news?q=${encodeURIComponent(selected)}`, fetcher);
+  // FX: USD -> EUR (Yahoo symbol USDEUR=X)
+  const { data: fx, isLoading: loadingFx } = useSWR<{ quote: { regularMarketPrice?: number } }>(
+    `/api/quote?ticker=${encodeURIComponent("USDEUR=X")}`,
+    fetcher
+  );
 
   const chartData = useMemo(() => {
     const candles = history?.candles ?? [];
@@ -27,17 +32,18 @@ export default function Home() {
     const ema50 = calculateEMA(closes, 50);
     const rsi14 = calculateRSI(closes, 14);
     const macd = calculateMACD(closes);
+    const usdToEur = fx?.quote?.regularMarketPrice ?? 1; // multiply USD values to get EUR
 
     return candles.map((c, idx) => ({
       date: c.date ? new Date(c.date).toLocaleDateString() : "",
-      close: c.close,
-      sma20: idx >= candles.length - sma20.length ? sma20[idx - (candles.length - sma20.length)] : undefined,
-      ema50: idx >= candles.length - ema50.length ? ema50[idx - (candles.length - ema50.length)] : undefined,
+      close: typeof c.close === "number" ? c.close * usdToEur : c.close,
+      sma20: idx >= candles.length - sma20.length ? sma20[idx - (candles.length - sma20.length)] * usdToEur : undefined,
+      ema50: idx >= candles.length - ema50.length ? ema50[idx - (candles.length - ema50.length)] * usdToEur : undefined,
       rsi14: idx >= candles.length - rsi14.length ? rsi14[idx - (candles.length - rsi14.length)] : undefined,
       macd: idx >= candles.length - macd.length ? macd[idx - (candles.length - macd.length)]?.MACD : undefined,
       signal: idx >= candles.length - macd.length ? macd[idx - (candles.length - macd.length)]?.signal : undefined,
     }));
-  }, [history]);
+  }, [history, fx]);
 
   useEffect(() => {
     setSelected((prev) => (tickers.includes(prev) ? prev : tickers[0]!));
@@ -92,7 +98,11 @@ export default function Home() {
             <div className="flex items-baseline justify-between">
               <div className="text-lg font-semibold">{selected}</div>
               <div className="text-sm text-muted-foreground">
-                {loadingQuote ? "Lade Quote..." : quote?.quote?.regularMarketPrice}
+                {loadingQuote || loadingFx
+                  ? "Lade Quote..."
+                  : new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(
+                      (quote?.quote?.regularMarketPrice ?? 0) * (fx?.quote?.regularMarketPrice ?? 1)
+                    )}
               </div>
             </div>
             <div className="h-64 mt-4">
@@ -106,7 +116,11 @@ export default function Home() {
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="date" hide tick={{ fontSize: 12 }} />
-                  <YAxis domain={["auto", "auto"]} tick={{ fontSize: 12 }} />
+                  <YAxis
+                    domain={["auto", "auto"]}
+                    tick={{ fontSize: 12 }}
+                    tickFormatter={(v) => new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(Number(v))}
+                  />
                   <Tooltip />
                   <Area type="monotone" dataKey="close" stroke="#111827" fill="url(#colorClose)" name="Close" />
                   <Line type="monotone" dataKey="sma20" stroke="#1d4ed8" dot={false} name="SMA 20" />
