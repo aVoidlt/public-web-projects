@@ -97,7 +97,7 @@ export default function Home() {
             </div>
             <div className="h-64 mt-4">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData} margin={{ left: 12, right: 12, top: 10, bottom: 0 }}>
+                <AreaChart data={chartData} syncId="synced" margin={{ left: 12, right: 12, top: 10, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorClose" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#111827" stopOpacity={0.6} />
@@ -116,32 +116,31 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="border rounded-md p-3">
-              <div className="text-sm font-medium mb-2">RSI (14)</div>
-              <div className="h-40">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={chartData} margin={{ left: 12, right: 12, top: 10, bottom: 0 }}>
-                    <YAxis domain={[0, 100]} tick={{ fontSize: 12 }} />
-                    <XAxis dataKey="date" hide tick={{ fontSize: 12 }} />
-                    <Tooltip />
-                    <Line type="monotone" dataKey="rsi14" stroke="#16a34a" dot={false} name="RSI 14" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
+          <div className="border rounded-md p-3">
+            <div className="text-sm font-medium mb-2">RSI (14)</div>
+            <div className="h-40">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData} syncId="synced" margin={{ left: 12, right: 12, top: 10, bottom: 0 }}>
+                  <YAxis domain={[0, 100]} tick={{ fontSize: 12 }} />
+                  <XAxis dataKey="date" hide tick={{ fontSize: 12 }} />
+                  <Tooltip />
+                  <Line type="monotone" dataKey="rsi14" stroke="#16a34a" dot={false} name="RSI 14" />
+                </AreaChart>
+              </ResponsiveContainer>
             </div>
-            <div className="border rounded-md p-3">
-              <div className="text-sm font-medium mb-2">MACD</div>
-              <div className="h-40">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={chartData} margin={{ left: 12, right: 12, top: 10, bottom: 0 }}>
-                    <XAxis dataKey="date" hide tick={{ fontSize: 12 }} />
-                    <Tooltip />
-                    <Line type="monotone" dataKey="macd" stroke="#7c3aed" dot={false} name="MACD" />
-                    <Line type="monotone" dataKey="signal" stroke="#f59e0b" dot={false} name="Signal" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
+          </div>
+
+          <div className="border rounded-md p-3">
+            <div className="text-sm font-medium mb-2">MACD</div>
+            <div className="h-40">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData} syncId="synced" margin={{ left: 12, right: 12, top: 10, bottom: 0 }}>
+                  <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                  <Tooltip />
+                  <Line type="monotone" dataKey="macd" stroke="#7c3aed" dot={false} name="MACD" />
+                  <Line type="monotone" dataKey="signal" stroke="#f59e0b" dot={false} name="Signal" />
+                </AreaChart>
+              </ResponsiveContainer>
             </div>
           </div>
 

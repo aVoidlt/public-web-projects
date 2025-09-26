@@ -5,7 +5,7 @@ import yahooFinance from "yahoo-finance2";
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const q = searchParams.get("q");
-  const pageSize = Number(searchParams.get("pageSize") || 10);
+  const pageSize = Number(searchParams.get("pageSize") || 20);
 
   if (!process.env.NEWSAPI_KEY) {
     return NextResponse.json(
