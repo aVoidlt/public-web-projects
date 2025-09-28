@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import useSWR from "swr";
 import { calculateEMA, calculateMACD, calculateRSI, calculateSMA, extractCloses, type Candle } from "@/lib/indicators";
-import { ReloadIcon } from "@radix-ui/react-icons";
+import { ReloadIcon, DownloadIcon } from "@radix-ui/react-icons";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, Line, ResponsiveContainer } from "recharts";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
@@ -45,6 +45,36 @@ export default function Home() {
     }));
   }, [history, fx]);
 
+  const exportToCSV = () => {
+    if (!chartData.length) return;
+
+    const headers = ["Date", "Close (EUR)", "SMA 20 (EUR)", "EMA 50 (EUR)", "RSI 14", "MACD", "Signal"];
+    const csvContent = [
+      headers.join(","),
+      ...chartData.map((row) =>
+        [
+          row.date,
+          row.close?.toFixed(2) ?? "",
+          row.sma20?.toFixed(2) ?? "",
+          row.ema50?.toFixed(2) ?? "",
+          row.rsi14?.toFixed(2) ?? "",
+          row.macd?.toFixed(4) ?? "",
+          row.signal?.toFixed(4) ?? "",
+        ].join(",")
+      ),
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `${selected}_chart_data_${new Date().toISOString().split("T")[0]}.csv`);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   useEffect(() => {
     setSelected((prev) => (tickers.includes(prev) ? prev : tickers[0]!));
   }, [tickers]);
@@ -72,6 +102,15 @@ export default function Home() {
             title="Neu laden"
           >
             {loadingHistory ? <ReloadIcon className="animate-spin" /> : "Neu laden"}
+          </button>
+          <button
+            className="border rounded-md px-3 py-2 text-sm flex items-center gap-1"
+            onClick={exportToCSV}
+            disabled={!chartData.length}
+            title="CSV exportieren"
+          >
+            <DownloadIcon className="w-4 h-4" />
+            CSV
           </button>
         </div>
       </header>
